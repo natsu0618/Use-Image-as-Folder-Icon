@@ -63,8 +63,13 @@ def _notify_shell(w_event_id, u_flags, item1=None, item2=None):
     shell32.SHChangeNotify(w_event_id, u_flags, item1, item2)
 
 
-def _set_folder_custom_icon(folder_path, icon_path):
-    """调用资源管理器"属性→自定义"内部使用的 SHGetSetFolderCustomSettings 写入 desktop.ini。"""
+def _set_folder_custom_icon(folder_path, icon_ref):
+    """调用资源管理器"属性→自定义"内部使用的 SHGetSetFolderCustomSettings 写入 desktop.ini。
+
+    传入的是相对文件名（如 @folder-icon-cover.ico），因此 desktop.ini 中
+    写出的就是 IconResource=@folder-icon-cover.ico,0；该 API 写入成功的同时
+    会通知 Explorer 立即刷新文件夹图标，无需移动/重命名文件夹。
+    """
     shell32 = ctypes.windll.shell32
     shell32.SHGetSetFolderCustomSettings.argtypes = [
         ctypes.POINTER(SHFOLDERCUSTOMSETTINGS),
@@ -76,7 +81,7 @@ def _set_folder_custom_icon(folder_path, icon_path):
     pfcs = SHFOLDERCUSTOMSETTINGS()
     pfcs.dwSize = ctypes.sizeof(SHFOLDERCUSTOMSETTINGS)
     pfcs.dwMask = FCSM_ICONFILE
-    pfcs.pszIconFile = icon_path
+    pfcs.pszIconFile = icon_ref
     pfcs.cchIconFile = 0
     pfcs.iIconIndex = 0
     return shell32.SHGetSetFolderCustomSettings(
@@ -166,7 +171,9 @@ class SetAsIcon:
         except Exception:
             return False
         icon_filename = os.path.basename(icon_path)
-        return "IconResource" in text and icon_filename.lower() in text.lower()
+        # 要求 desktop.ini 以不带引号、不带目录前缀的相对路径引用图标文件；
+        # 旧版写入的绝对路径/带引号形式会被判定为无效并自动重写
+        return f"IconResource={icon_filename}".lower() in text.lower()
 
     # 将 ico 文件设置为图标，并隐藏 desktop.ini 文件 & .ico 文件
     def changeIcon(self, folder_name: str, icon_dir: str):
@@ -176,20 +183,20 @@ class SetAsIcon:
 
         has_valid_setting = self._has_valid_icon_setting(ini_file_path, icon_path)
         if not has_valid_setting:
-            # 使用资源管理器"属性→自定义"对话框内部同一个 API 写入 desktop.ini：
-            # 它会创建 desktop.ini（并自动设为隐藏+系统属性），同时让 Explorer 立即刷新图标
-            hr = _set_folder_custom_icon(icon_dir, icon_path)
+            # 用资源管理器"属性→自定义"内部同一个 API 写入 desktop.ini。
+            # 传入相对文件名（icon_name），写出的内容即：
+            #   [.ShellClassInfo]
+            #   IconResource=@folder-icon-cover.ico,0
+            # 并且 API 写入成功时已通知 Explorer 立即刷新图标。
+            hr = _set_folder_custom_icon(icon_dir, icon_name)
             if hr != 0 or not os.path.exists(ini_file_path):
-                # 兜底：API 不可用时手动写 desktop.ini
+                # 兜底：API 不可用时手动写 desktop.ini（同样的相对路径内容）
                 if os.path.exists(ini_file_path):
                     # 同 ICO 一样，先临时清掉隐藏/系统属性才能覆写
                     win32api.SetFileAttributes(
                         str(ini_file_path), win32con.FILE_ATTRIBUTE_NORMAL
                     )
-                iniline = (
-                    f'[.ShellClassInfo]\nIconResource="{icon_name}",0\n'
-                    "[ViewState]\nMode=\nVid=\nFolderType=Generic"
-                )
+                iniline = f"[.ShellClassInfo]\nIconResource={icon_name},0\n"
                 with open(ini_file_path, "w", encoding="utf-8") as inifile:
                     inifile.write(iniline)
                 _add_file_attributes(
