@@ -1,4 +1,4 @@
-# SetFloderIco — 将图片应用为文件夹图标
+# SetFolderIcon — 将图片应用为文件夹图标
 
 一个 Windows 下的 Python 小工具：把文件夹里的图片自动转换成 `.ico`，设置为该文件夹的自定义图标，并提供图形界面（GUI）进行批量操作。
 
@@ -114,3 +114,10 @@ IconResource="@folder-icon-cover.ico",0
 - 设置图标后源图片若被删除，则原图无法找回；删除源图片前请确认。
 - 处理带隐藏/系统/只读属性的文件时会先临时清除属性再写入，处理完恢复，不影响原有其他属性。
 - 若文件夹被其他程序占用（如资源管理器正在预览），可能出现“进程无法访问”的错误，重试即可。
+
+## 代码来源
+
+本项目代码来源：
+
+- 由 AI 生成
+- 参考自 [yodhcn/dlsite-doujin-renamer](https://github.com/yodhcn/dlsite-doujin-renamer)
