@@ -103,9 +103,9 @@ IconResource="@folder-icon-cover.ico",0
 | 文件 | 说明 |
 | --- | --- |
 | `SetAsIcon.py` | 核心库：图片查找、ICO 生成、desktop.ini 写入、图标刷新/删除 |
-| `图片应用为文件夹图标GUI.py` | PyQt5 图形界面：拖拽、批量设置/删除、日志与后台线程 |
+| `GUI.py` | PyQt5 图形界面：拖拽、批量设置/删除、日志与后台线程 |
 
-`图片应用为文件夹图标GUI.py` 中的 `IconWorker` 和 `IconRemoveWorker` 基于 `QThread` 在后台执行批量任务，通过信号把日志和失败列表传回界面，避免阻塞 UI。
+`GUI.py` 中的 `IconWorker` 和 `IconRemoveWorker` 基于 `QThread` 在后台执行批量任务，通过信号把日志和失败列表传回界面，避免阻塞 UI。
 
 ## 注意事项
 
