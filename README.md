@@ -77,14 +77,14 @@ setter.refresh_icon_cache()
 
 ### 2. 写入 desktop.ini
 
-调用资源管理器“属性 → 自定义”内部使用的同一个 API `SHGetSetFolderCustomSettings` 写入 `desktop.ini`，内容指向图标文件：
+调用资源管理器“属性 → 自定义”内部使用的同一个 API `SHGetSetFolderCustomSettings` 写入 `desktop.ini`。传入的是**相对路径**的图标文件名，因此内容为：
 
 ```ini
 [.ShellClassInfo]
-IconResource="@folder-icon-cover.ico",0
+IconResource=@folder-icon-cover.ico,0
 ```
 
-若 API 调用失败，则手动写入相同内容作为兜底。`desktop.ini` 和 `.ico` 文件都会被加上 **隐藏 + 系统** 属性；文件夹本身会被加上 **只读** 属性——这与资源管理器的行为一致，只读标记会告诉 Explorer 去读取 `desktop.ini`。
+该 API 写入成功的同时会通知 Explorer 立即刷新图标，无需移动或重命名文件夹；若 API 调用失败，则手动写入相同内容作为兜底。`desktop.ini` 和 `.ico` 文件都会被加上 **隐藏 + 系统** 属性；文件夹本身会被加上 **只读** 属性——这与资源管理器的行为一致，只读标记会告诉 Explorer 去读取 `desktop.ini`。
 
 ### 3. 刷新图标缓存
 
@@ -109,7 +109,7 @@ IconResource="@folder-icon-cover.ico",0
 
 ## 注意事项
 
-- 仅支持 Windows，其他系统无法调用 `SHGetSetFolderCustomSettings` 等 Shell API。
+- 仅支持 Windows，其他系统无法调用 `SHGetSetFolderCustomSettings`、`SHChangeNotify` 等 Windows Shell API。
 - 支持 `jpg / png / webp / bmp / tiff / gif / jfif` 等常见图片格式。
 - 设置图标后源图片若被删除，则原图无法找回；删除源图片前请确认。
 - 处理带隐藏/系统/只读属性的文件时会先临时清除属性再写入，处理完恢复，不影响原有其他属性。
